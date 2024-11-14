@@ -9,6 +9,8 @@ const plugin = (fpAPI) => {
   const { addFilter, utils } = fpAPI;
   const { Type, createRoute, isFile } = utils;
 
+  let count = 1
+
   // imagePreviewView
   const imagePreviewView = createImageWrapperView(fpAPI);
 
@@ -180,14 +182,19 @@ const plugin = (fpAPI) => {
           }
 
           if (root.ref.shouldDrawPreview) {
+            const imagePreviewDelay = root.query("GET_IMAGE_PREVIEW_DELAY")
             // queue till next frame so we're sure the height has been applied this forces the draw image call inside the wrapper view to use the correct height
             requestAnimationFrame(() => {
               // this requestAnimationFrame nesting is horrible but it fixes an issue with 100hz displays on Chrome
               // https://github.com/pqina/filepond-plugin-image-preview/issues/57
               requestAnimationFrame(() => {
-                root.dispatch("DID_FINISH_CALCULATE_PREVIEWSIZE", {
-                  id: props.id,
-                });
+                count++
+
+                setTimeout(() => {
+                  root.dispatch("DID_FINISH_CALCULATE_PREVIEWSIZE", {
+                    id: props.id,
+                  });
+                }, count * imagePreviewDelay)
               });
             });
 
@@ -239,6 +246,9 @@ const plugin = (fpAPI) => {
 
       // Allows filtering of markup to only show certain shapes
       imagePreviewMarkupFilter: [() => true, Type.FUNCTION],
+
+      // The delay before image preview is loaded (on mobile this should be set to around ~200 for bigger file uploads)
+      imagePreviewDelay: [1, Type.INT],
     },
   };
 };
